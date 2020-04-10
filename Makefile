@@ -1,18 +1,25 @@
-CC ?= gcc
-CFLAGS += -Wall $(shell pkg-config --cflags libgcrypt)
-LDFLAGS += $(shell pkg-config --libs libgcrypt)
+.POSIX:
 
-OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
+CC = cc
+CFLAGS = -Wall `pkg-config --cflags libgcrypt`
+LDLIBS = `pkg-config --libs libgcrypt`
+PREFIX = /usr/local
 
-.PHONY: clean
+all: omut
 
-all: main
+install: omut
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	cp omut $(DESTDIR)$(PREFIX)/bin
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+uninstall: omut
+	rm $(DESTDIR)$(PREFIX)/bin/omut
 
-main: $(OBJECTS) $(LDFLAGS)
-	$(CC)$(OBJECTS) $(LDFLAGS) -o $@
+omut: omut.o crypt.o
+	$(CC) $(LDFLAGS) -o omut crypt.o omut.o $(LDLIBS)
+
+crypt.o: crypt.c crypt.h
+
+omut.o: omut.c crypt.h
 
 clean:
-	-rm *.o main
+	rm -f omut *.o
