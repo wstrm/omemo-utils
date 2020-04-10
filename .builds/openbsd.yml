@@ -5,4 +5,5 @@ packages:
 
 tasks:
   - build: |
+      cd omemo-utils
       make
