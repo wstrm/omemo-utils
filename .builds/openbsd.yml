@@ -4,6 +4,9 @@ packages:
   - libgcrypt
 
 tasks:
-  - build: |
+  - clang: |
       cd omemo-utils
-      make
+      make CC=clang
+  - gcc: |
+      cd omemo-utils
+      make CC=gcc
