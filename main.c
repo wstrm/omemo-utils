@@ -1,5 +1,4 @@
 #include "crypt.h"
-#include <bsd/string.h>
 #include <gcrypt.h>
 #include <stdio.h>
 #include <stdlib.h>
