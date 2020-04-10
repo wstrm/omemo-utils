@@ -1,0 +1,8 @@
+image: openbsd/6.6
+
+packages:
+  - libgcrypt
+
+tasks:
+  - build: |
+      make
