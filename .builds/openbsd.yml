@@ -6,7 +6,7 @@ packages:
 tasks:
   - clang: |
       cd omemo-utils
-      make CC=clang
+      make CC=clang clean all
   - gcc: |
       cd omemo-utils
-      make CC=gcc
+      make CC=gcc clean all
