@@ -1,6 +1,6 @@
-CC=gcc
-CFLAGS=-Wall $(shell pkg-config --cflags libgcrypt)
-LDFLAGS=$(shell pkg-config --libs libgcrypt)
+CC ?= gcc
+CFLAGS += -Wall $(shell pkg-config --cflags libgcrypt)
+LDFLAGS += $(shell pkg-config --libs libgcrypt)
 
 OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
 
