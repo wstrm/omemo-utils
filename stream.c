@@ -49,21 +49,16 @@ static size_t header_callback(char *data, size_t size, size_t nitems,
                               void *userdata) {
   STREAM *stream = (STREAM *)userdata;
   size *= nitems;
-  char *sep = ": ";
-  char *token = NULL;
 
-  token = strtok(data, sep);
-  if (token == NULL) {
-    return size;
+  if (stream->expected_size > 0) {
+    return size; // No-op.
   }
 
-  if (strcmp(token, "Content-Length") == 0) {
-    token = strtok(NULL, sep);
-    if (token == NULL) {
-      return size;
-    }
+  char header[] = "Content-Length: ";
+  size_t header_len = sizeof(header) - 1;
 
-    stream->expected_size = strtoul(token, NULL, 10);
+  if (strncmp(data, header, header_len) == 0) {
+    stream->expected_size = strtoul(&(data[header_len]), NULL, 10);
   }
 
   return size;
