@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2020 William Wennerström
+
 #include "crypt.h"
 #include <gcrypt.h>
 #include <stdio.h>
