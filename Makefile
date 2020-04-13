@@ -1,8 +1,9 @@
 .POSIX:
 
 CC = cc
-CFLAGS = -Wall `pkg-config --cflags libgcrypt`
-LDLIBS = `pkg-config --libs libgcrypt`
+CFLAGS = -std=c99 -Wall -Werror -pedantic -D_XOPEN_SOURCE=700 \
+		 `pkg-config --cflags libgcrypt libcurl`
+LDLIBS = `pkg-config --libs libgcrypt libcurl`
 PREFIX = /usr/local
 
 all: omut
@@ -14,12 +15,14 @@ install: omut
 uninstall: omut
 	rm $(DESTDIR)$(PREFIX)/bin/omut
 
-omut: omut.o crypt.o
-	$(CC) $(LDFLAGS) -o omut crypt.o omut.o $(LDLIBS)
+omut: omut.o crypt.o stream.o
+	$(CC) $(LDFLAGS) -o omut stream.o crypt.o omut.o $(LDLIBS)
+
+stream.o: stream.c stream.h
 
 crypt.o: crypt.c crypt.h
 
-omut.o: omut.c crypt.h
+omut.o: omut.c crypt.h stream.h
 
 clean:
 	rm -f omut *.o

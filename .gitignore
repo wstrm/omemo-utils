@@ -1,2 +1,5 @@
 omut
 *.o
+*.aes
+*.txt
+*.png

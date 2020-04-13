@@ -1,5 +1,7 @@
+#include "stream.h"
 #include <assert.h>
 #include <gcrypt.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -8,7 +10,7 @@
 #define AES256_GCM_TAG_LENGTH 16
 #define AES256_GCM_BUFFER_SIZE 1024
 
-int aes256gcm_crypt(FILE *in, FILE *out, int encrypt) {
+int aes256gcm_crypt(STREAM *in, FILE *out, bool encrypt) {
   if (!gcry_control(GCRYCTL_INITIALIZATION_FINISHED_P)) {
     fputs("libgcrypt has not been initialized\n", stderr);
     abort();
@@ -17,10 +19,14 @@ int aes256gcm_crypt(FILE *in, FILE *out, int encrypt) {
   unsigned char key[] = "0123456789abcdef0123456789abcdef";
   unsigned char nonce[] = "123456788765";
 
+  off_t file_size = in->expected_size;
+  if (!encrypt) {
+    file_size -= AES256_GCM_TAG_LENGTH;
+  }
+
   gcry_error_t res;
   gcry_cipher_hd_t hd;
 
-  /* Create context handle with AES256 GCM. */
   res = gcry_cipher_open(&hd, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_GCM,
                          GCRY_CIPHER_SECURE);
   if (res != GPG_ERR_NO_ERROR) {
@@ -39,15 +45,23 @@ int aes256gcm_crypt(FILE *in, FILE *out, int encrypt) {
 
   unsigned char buffer[AES256_GCM_BUFFER_SIZE];
 
-  int bytes;
-  for (;;) {
-    bytes = fread(buffer, 1, AES256_GCM_BUFFER_SIZE, in);
-    if (!bytes)
-      break; // EOF.
-
-    if (bytes < AES256_GCM_BUFFER_SIZE) {
-      gcry_cipher_final(hd); // Signal last round of bytes.
+  int bytes = 0;
+  off_t bytes_read = 0, bytes_available = 0, read_size = 0;
+  while (bytes_read < file_size) {
+    bytes_available = file_size - bytes_read;
+    if (!bytes_available) {
+      break;
     }
+
+    if (bytes_available < AES256_GCM_BUFFER_SIZE) {
+      read_size = bytes_available;
+      gcry_cipher_final(hd); // Signal last round of bytes.
+    } else {
+      read_size = AES256_GCM_BUFFER_SIZE;
+    }
+
+    bytes = stream_read(buffer, read_size, in);
+    bytes_read += bytes;
 
     if (encrypt) {
       res = gcry_cipher_encrypt(hd, buffer, bytes, NULL, 0);
@@ -75,8 +89,7 @@ int aes256gcm_crypt(FILE *in, FILE *out, int encrypt) {
 
   } else {
     // Read and verify authentication tag stored at the end of the file.
-    fseek(in, -AES256_GCM_TAG_LENGTH, SEEK_END);
-    bytes = fread(tag, 1, AES256_GCM_TAG_LENGTH, in);
+    bytes = stream_read(tag, AES256_GCM_TAG_LENGTH, in);
     res = gcry_cipher_checktag(hd, tag, bytes);
   }
 
@@ -95,10 +108,10 @@ int aes256gcm_init(void) {
   return 0;
 }
 
-int aes256gcm_encrypt(FILE *in, FILE *out) {
-  return aes256gcm_crypt(in, out, 1);
+int aes256gcm_encrypt(STREAM *in, FILE *out) {
+  return aes256gcm_crypt(in, out, true);
 }
 
-int aes256gcm_decrypt(FILE *in, FILE *out) {
-  return aes256gcm_crypt(in, out, 0);
+int aes256gcm_decrypt(STREAM *in, FILE *out) {
+  return aes256gcm_crypt(in, out, false);
 }
