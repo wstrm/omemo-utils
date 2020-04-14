@@ -48,6 +48,8 @@ static size_t header_callback(char *data, size_t size, size_t nitems,
 }
 
 STREAM *stream_open(const char *url) {
+  CURLcode res;
+
   STREAM *stream;
   stream = calloc(1, sizeof(STREAM));
   if (!stream) {
@@ -68,7 +70,11 @@ STREAM *stream_open(const char *url) {
   curl_easy_setopt(hd, CURLOPT_WRITEFUNCTION, write_callback);
   curl_easy_setopt(hd, CURLOPT_WRITEDATA, (void *)stream);
 
-  curl_easy_perform(hd);
+  res = curl_easy_perform(hd);
+  if (res != CURLE_OK) {
+    free(stream);
+    return NULL;
+  }
 
   return stream;
 }
