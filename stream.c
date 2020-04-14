@@ -7,23 +7,6 @@
 #include <string.h>
 #include <sys/stat.h>
 
-/*
-off_t fsize(FILE *file) {
-  struct stat st;
-
-  int fd = fileno(file);
-  if (fd < 0) {
-    return -1;
-  }
-
-  if (fstat(fd, &st) == 0) {
-    return st.st_size;
-  }
-
-  return -1;
-}
-*/
-
 static size_t write_callback(void *data, size_t size, size_t nmemb,
                              void *userdata) {
   size *= nmemb;
