@@ -12,6 +12,14 @@ enum direction { ENCRYPT, DECRYPT };
 #define EXIT_INVALID_CHECKSUM 2
 #define EXIT_BAD_FILE 3
 
+void print_crypto_material(char *type, unsigned char *material, int len) {
+  fprintf(stderr, "%s: ", type);
+  for (int i = 0; i < len; i++) {
+    fprintf(stderr, "%x", material[i]);
+  }
+  fprintf(stderr, "\n");
+}
+
 int main(int argc, char **argv) {
   int opt;
   int direction = ENCRYPT;
@@ -44,10 +52,16 @@ int main(int argc, char **argv) {
 
   aes256gcm_init();
 
+  unsigned char *key;
+  unsigned char nonce[AES256_GCM_NONCE_LENGTH];
+
+  key = gcry_random_bytes(AES256_GCM_KEY_LENGTH, GCRY_VERY_STRONG_RANDOM);
+  gcry_create_nonce(nonce, AES256_GCM_NONCE_LENGTH);
+
   if (direction == ENCRYPT) {
-    crypt_res = aes256gcm_encrypt(in_stream, stdout);
+    crypt_res = aes256gcm_encrypt(in_stream, stdout, key, nonce);
   } else /* direction == DECRYPT */ {
-    crypt_res = aes256gcm_decrypt(in_stream, stdout);
+    crypt_res = aes256gcm_decrypt(in_stream, stdout, key, nonce);
   }
 
   if (crypt_res == GPG_ERR_CHECKSUM) {
@@ -57,6 +71,9 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Bad file (#%d)\n", crypt_res);
     exit_status = EXIT_BAD_FILE;
   }
+
+  print_crypto_material("Key", key, AES256_GCM_KEY_LENGTH);
+  print_crypto_material("Nonce", nonce, AES256_GCM_NONCE_LENGTH);
 
   exit(exit_status);
 }

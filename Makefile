@@ -23,7 +23,7 @@ omut: omut.o crypt.o stream.o
 
 stream.o: stream.c stream.h
 
-crypt.o: crypt.c crypt.h
+crypt.o: crypt.c crypt.h stream.h
 
 omut.o: omut.c crypt.h stream.h
 

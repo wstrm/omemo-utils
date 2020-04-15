@@ -1,26 +1,23 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2020 William Wennerström
 
-#include "stream.h"
+#include "crypt.h"
 #include <assert.h>
 #include <gcrypt.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
-#define AES256_GCM_KEY_LENGTH 32
-#define AES256_GCM_NONCE_LENGTH 12
 #define AES256_GCM_TAG_LENGTH 16
 #define AES256_GCM_BUFFER_SIZE 1024
 
-int aes256gcm_crypt(STREAM *in, FILE *out, bool encrypt) {
+int aes256gcm_crypt(STREAM *in, FILE *out, unsigned char key[],
+                    unsigned char nonce[], bool encrypt) {
+
   if (!gcry_control(GCRYCTL_INITIALIZATION_FINISHED_P)) {
     fputs("libgcrypt has not been initialized\n", stderr);
     abort();
   }
-
-  unsigned char key[] = "0123456789abcdef0123456789abcdef";
-  unsigned char nonce[] = "123456788765";
 
   off_t file_size = in->expected_size;
   if (!encrypt) {
@@ -111,10 +108,12 @@ int aes256gcm_init(void) {
   return 0;
 }
 
-int aes256gcm_encrypt(STREAM *in, FILE *out) {
-  return aes256gcm_crypt(in, out, true);
+int aes256gcm_encrypt(STREAM *in, FILE *out, unsigned char key[],
+                      unsigned char nonce[]) {
+  return aes256gcm_crypt(in, out, key, nonce, true);
 }
 
-int aes256gcm_decrypt(STREAM *in, FILE *out) {
-  return aes256gcm_crypt(in, out, false);
+int aes256gcm_decrypt(STREAM *in, FILE *out, unsigned char key[],
+                      unsigned char nonce[]) {
+  return aes256gcm_crypt(in, out, key, nonce, false);
 }
