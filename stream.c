@@ -7,6 +7,14 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#define AESGCM_URL_SCHEME "aesgcm://"
+#define AESGCM_URL_SCHEME_LEN (size_t)(sizeof(AESGCM_URL_SCHEME) - 1)
+#define AESGCM_URL_FRAGMENT_LEN                                                \
+  (size_t)(AESGCM_URL_NONCE_SIZE + AESGCM_URL_KEY_SIZE)
+
+#define HEADER_CL "Content-Length: "
+#define HEADER_CL_LEN (size_t)(sizeof(HEADER_CL) - 1)
+
 static size_t write_callback(void *data, size_t size, size_t nmemb,
                              void *userdata) {
   size *= nmemb;
@@ -37,14 +45,48 @@ static size_t header_callback(char *data, size_t size, size_t nitems,
     return size; // No-op.
   }
 
-  char header[] = "Content-Length: ";
-  size_t header_len = sizeof(header) - 1;
-
-  if (strncmp(data, header, header_len) == 0) {
-    stream->expected_size = strtoul(&(data[header_len]), NULL, 10);
+  if (strncmp(data, HEADER_CL, HEADER_CL_LEN) == 0) {
+    stream->expected_size = strtoul(&(data[HEADER_CL_LEN]), NULL, 10);
   }
 
   return size;
+}
+
+int parse_aesgcm_url(char *url, char *resource, size_t resource_size,
+                     char nonce[AESGCM_URL_NONCE_SIZE],
+                     char key[AESGCM_URL_KEY_SIZE]) {
+
+  size_t url_len = strlen(url);
+  size_t nonce_pos;
+  size_t key_pos;
+  size_t resource_len;
+  size_t resource_pos;
+
+  // Must allocate at least the size of the URL.
+  if (resource_size < url_len) {
+    return -1;
+  }
+
+  if (strncmp(url, AESGCM_URL_SCHEME, AESGCM_URL_SCHEME_LEN) == 0) {
+    // Nonce is 24 characters, key is 64 characters, giving a total of 88
+    // characters. Plus the protocol scheme length and fragment character.
+    if (url_len <= AESGCM_URL_SCHEME_LEN + AESGCM_URL_FRAGMENT_LEN + 1) {
+      return -1;
+    }
+
+    nonce_pos = strcspn(url, "#") + 1;
+    key_pos = nonce_pos + AESGCM_URL_KEY_SIZE;
+    resource_pos = AESGCM_URL_SCHEME_LEN;
+    resource_len = url_len - AESGCM_URL_FRAGMENT_LEN - resource_pos - 1;
+
+    strncpy(resource, &(url[resource_pos]), resource_len);
+    strncpy(nonce, &(url[nonce_pos]), AESGCM_URL_NONCE_SIZE);
+    strncpy(key, &(url[key_pos]), AESGCM_URL_KEY_SIZE);
+
+    return 0;
+  }
+
+  return -1;
 }
 
 STREAM *stream_open(const char *url) {
