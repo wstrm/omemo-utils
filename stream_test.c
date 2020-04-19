@@ -13,8 +13,8 @@ void test_parse_aesgcm_url() {
 
   char parsed_url[sizeof(raw_url) + HTTPS_URL_SCHEME_LEN];
 
-  unsigned char key[64];
-  unsigned char nonce[24];
+  unsigned char key[AESGCM_URL_NONCE_SIZE];
+  unsigned char nonce[AESGCM_URL_KEY_SIZE];
 
   assert(parse_aesgcm_url(raw_url, parsed_url, sizeof(parsed_url), nonce,
                           key) == 0);

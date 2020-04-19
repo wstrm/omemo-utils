@@ -3,6 +3,10 @@
 
 .POSIX:
 
+.SUFFIXES:
+
+.PHONY: test all
+
 CC = cc
 CFLAGS = -std=c99 -Wall -Werror -pedantic -D_XOPEN_SOURCE=700 \
 		 `pkg-config --cflags libgcrypt libcurl`
@@ -20,20 +24,24 @@ uninstall: omut
 
 omut: omut.o crypt.o stream.o
 
-stream.o: stream.c stream.h
-
-crypt.o: crypt.c crypt.h stream.h
-
-omut.o: omut.c crypt.h stream.h
-
-stream_test.o: stream_test.c stream.h
+omut.o: omut.c
 
 stream_test: stream_test.o stream.o
-
-.PHONY: test
 
 test: stream_test
 	@./stream_test
 
 clean:
 	rm -f omut *.o *_test
+
+%.o: %.c %.h
+
+%_test.o: %_test.c
+
+%::
+	$(CC)$(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+.SUFFIXES: .c .o
+
+.c.o:
+	$(CC) -c $(CFLAGS) $< -o $@
