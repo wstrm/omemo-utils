@@ -2,9 +2,8 @@
 # Copyright (c) 2020 William Wennerström
 
 .POSIX:
-
 .SUFFIXES:
-
+.SUFFIXES: .c .o
 .PHONY: test all
 
 CC = cc
@@ -40,8 +39,6 @@ clean:
 
 %::
 	$(CC)$(LDFLAGS) -o $@ $^ $(LDLIBS)
-
-.SUFFIXES: .c .o
 
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
