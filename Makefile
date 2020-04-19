@@ -9,7 +9,7 @@ CFLAGS = -std=c99 -Wall -Werror -pedantic -D_XOPEN_SOURCE=700 \
 LDLIBS = `pkg-config --libs libgcrypt libcurl`
 PREFIX = /usr/local
 
-all: omut
+all: test omut
 
 install: omut
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
@@ -33,7 +33,7 @@ stream_test: stream_test.o stream.o
 .PHONY: test
 
 test: stream_test
-	./stream_test
+	@./stream_test
 
 clean:
 	rm -f omut *.o *_test
