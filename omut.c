@@ -39,24 +39,27 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
-  char *in_path;
-  STREAM *in_stream;
+  char *raw_url = strdup(argv[optind]);
+  char *parsed_url = malloc(sizeof(raw_url) + HTTPS_URL_SCHEME_LEN);
 
-  in_path = strdup(argv[optind]);
-  in_stream = stream_open(in_path);
-
-  free(in_path);
-
-  int crypt_res = GPG_ERR_NO_ERROR;
-  int exit_status = EXIT_SUCCESS;
+  unsigned char *key = malloc(AES256_GCM_KEY_LENGTH);
+  unsigned char nonce[AES256_GCM_NONCE_LENGTH];
 
   aes256gcm_init();
 
-  unsigned char *key;
-  unsigned char nonce[AES256_GCM_NONCE_LENGTH];
+  if (parse_aesgcm_url(raw_url, parsed_url, sizeof(parsed_url), nonce, key) !=
+      0) {
+    key = gcry_random_bytes(AES256_GCM_KEY_LENGTH, GCRY_VERY_STRONG_RANDOM);
+    gcry_create_nonce(nonce, AES256_GCM_NONCE_LENGTH);
+  }
 
-  key = gcry_random_bytes(AES256_GCM_KEY_LENGTH, GCRY_VERY_STRONG_RANDOM);
-  gcry_create_nonce(nonce, AES256_GCM_NONCE_LENGTH);
+  STREAM *in_stream = stream_open(parsed_url);
+
+  free(parsed_url);
+  free(raw_url);
+
+  int crypt_res = GPG_ERR_NO_ERROR;
+  int exit_status = EXIT_SUCCESS;
 
   if (direction == ENCRYPT) {
     crypt_res = aes256gcm_encrypt(in_stream, stdout, key, nonce);
@@ -74,6 +77,8 @@ int main(int argc, char **argv) {
 
   print_crypto_material("Key", key, AES256_GCM_KEY_LENGTH);
   print_crypto_material("Nonce", nonce, AES256_GCM_NONCE_LENGTH);
+
+  free(key);
 
   exit(exit_status);
 }

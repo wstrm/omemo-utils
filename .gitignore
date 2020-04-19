@@ -1,5 +1,7 @@
 omut
+*_test
 *.o
 *.aes
 *.txt
 *.png
+test-*

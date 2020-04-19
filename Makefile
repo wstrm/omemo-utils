@@ -19,7 +19,6 @@ uninstall: omut
 	rm $(DESTDIR)$(PREFIX)/bin/omut
 
 omut: omut.o crypt.o stream.o
-	$(CC) $(LDFLAGS) -o omut stream.o crypt.o omut.o $(LDLIBS)
 
 stream.o: stream.c stream.h
 
@@ -27,5 +26,14 @@ crypt.o: crypt.c crypt.h stream.h
 
 omut.o: omut.c crypt.h stream.h
 
+stream_test.o: stream_test.c stream.h
+
+stream_test: stream_test.o stream.o
+
+.PHONY: test
+
+test: stream_test
+	./stream_test
+
 clean:
-	rm -f omut *.o
+	rm -f omut *.o *_test

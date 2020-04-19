@@ -7,6 +7,9 @@
 #define AESGCM_URL_NONCE_SIZE 24
 #define AESGCM_URL_KEY_SIZE 64
 
+#define HTTPS_URL_SCHEME "https://"
+#define HTTPS_URL_SCHEME_LEN (size_t)(sizeof("https://") - 1)
+
 struct stream_data {
   char *buffer;
   size_t buffer_pos;
@@ -19,5 +22,5 @@ typedef struct stream_data STREAM;
 size_t stream_read(void *buffer, size_t bytes, STREAM *stream);
 STREAM *stream_open(const char *url);
 int parse_aesgcm_url(char *url, char *resource, size_t resource_size,
-                     char nonce[AESGCM_URL_NONCE_SIZE],
-                     char key[AESGCM_URL_KEY_SIZE]);
+                     unsigned char nonce[AESGCM_URL_NONCE_SIZE],
+                     unsigned char key[AESGCM_URL_KEY_SIZE]);
