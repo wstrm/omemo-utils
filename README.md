@@ -1,4 +1,4 @@
-# omemo-utils
+# omemo-utils [![builds.sr.ht status](https://builds.sr.ht/~wstrm/omemo-utils.svg)](https://builds.sr.ht/~wstrm/omemo-utils?)
 
 **IN PROGRESS**: Below follows how the usage _should_ be like in the future.
 
