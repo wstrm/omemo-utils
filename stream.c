@@ -52,33 +52,32 @@ static size_t header_callback(char *data, size_t size, size_t nitems,
   return size;
 }
 
-int parse_aesgcm_url(char *url, size_t url_size, char *resource,
-                     size_t resource_size, unsigned char *nonce,
-                     unsigned char *key) {
+char *parse_aesgcm_url(char *url, unsigned char *nonce, unsigned char *key) {
 
-  size_t url_len = url_size - 1;
+  size_t url_len = strlen(url);
+  size_t url_size = url_len + 1;
+
   size_t nonce_pos;
   size_t key_pos;
+
   size_t resource_len;
   size_t resource_pos;
 
   // Must allocate at least the size of the URL and the HTTPS scheme length.
-  if (resource_size < url_size + HTTPS_URL_SCHEME_LEN) {
-    return -1;
-  }
+  char *resource = malloc(url_size + HTTPS_URL_SCHEME_LEN);
 
   if (strncmp(url, AESGCM_URL_SCHEME, AESGCM_URL_SCHEME_LEN) == 0) {
     // Nonce is 24 characters, key is 64 characters, giving a total of 88
     // characters. Plus the protocol scheme length and fragment character.
     if (url_len <= AESGCM_URL_SCHEME_LEN + AESGCM_URL_FRAGMENT_LEN + 1) {
-      return -1;
+      return NULL;
     }
 
     nonce_pos = strcspn(url, "#") + 1;
 
     // The fragment length must equal the expected AESGCM fragment length.
     if (url_len - nonce_pos != AESGCM_URL_FRAGMENT_LEN) {
-      return -1;
+      return NULL;
     }
 
     key_pos = nonce_pos + AESGCM_URL_KEY_SIZE;
@@ -91,10 +90,10 @@ int parse_aesgcm_url(char *url, size_t url_size, char *resource,
     memcpy(nonce, &(url[nonce_pos]), AESGCM_URL_NONCE_SIZE);
     memcpy(key, &(url[key_pos]), AESGCM_URL_KEY_SIZE);
 
-    return 0;
+    return resource;
   }
 
-  return -1;
+  return NULL;
 }
 
 STREAM *stream_open(const char *url) {
