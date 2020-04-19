@@ -15,8 +15,8 @@ void test_parse_aesgcm_url() {
   char raw_url[] =
       "aesgcm://"
       "example.org#"
-      "123456789abcdef000000000" // Nonce
-      "123456789abcdef000000000123456789abcdef000000000123456789abcdef0"; // Key
+      "123456789ABCdef000000000" // Nonce
+      "123456789abcDEF000000000123456789aBCDEf000000000123456789AbcdeF0"; // Key
 
   unsigned char key[AESGCM_URL_KEY_LEN / 2];
   unsigned char nonce[AESGCM_URL_NONCE_LEN / 2];

@@ -57,8 +57,8 @@ void bytes_from_hex(char *hex, unsigned char *bytes, size_t bytes_size) {
       0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, // 01234567
       0x08, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 89:;<=>?
       0x00, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x00, // @ABCDEFG
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // HIJKLMNO
   };
+  const size_t ht_size = sizeof(ht);
 
   unsigned char b0;
   unsigned char b1;
@@ -71,7 +71,9 @@ void bytes_from_hex(char *hex, unsigned char *bytes, size_t bytes_size) {
     b0 = ((unsigned char)hex[i + 0] & 0x1f) ^ 0x10;
     b1 = ((unsigned char)hex[i + 1] & 0x1f) ^ 0x10;
 
-    bytes[i / 2] = (unsigned char)(ht[b0] << 4) | ht[b1];
+    if (b0 <= ht_size && b1 <= ht_size) {
+      bytes[i / 2] = (unsigned char)(ht[b0] << 4) | ht[b1];
+    }
   }
 }
 
