@@ -21,6 +21,6 @@ typedef struct stream_data STREAM;
 
 size_t stream_read(void *buffer, size_t bytes, STREAM *stream);
 STREAM *stream_open(const char *url);
-int parse_aesgcm_url(char *url, char *resource, size_t resource_size,
-                     unsigned char nonce[AESGCM_URL_NONCE_SIZE],
-                     unsigned char key[AESGCM_URL_KEY_SIZE]);
+int parse_aesgcm_url(char *url, size_t url_size, char *resource,
+                     size_t resource_size, unsigned char *nonce,
+                     unsigned char *key);

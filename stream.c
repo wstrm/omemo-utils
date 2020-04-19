@@ -52,18 +52,18 @@ static size_t header_callback(char *data, size_t size, size_t nitems,
   return size;
 }
 
-int parse_aesgcm_url(char *url, char *resource, size_t resource_size,
-                     unsigned char nonce[AESGCM_URL_NONCE_SIZE],
-                     unsigned char key[AESGCM_URL_KEY_SIZE]) {
+int parse_aesgcm_url(char *url, size_t url_size, char *resource,
+                     size_t resource_size, unsigned char *nonce,
+                     unsigned char *key) {
 
-  size_t url_len = strlen(url);
+  size_t url_len = url_size - 1;
   size_t nonce_pos;
   size_t key_pos;
   size_t resource_len;
   size_t resource_pos;
 
   // Must allocate at least the size of the URL and the HTTPS scheme length.
-  if (resource_size < url_len + HTTPS_URL_SCHEME_LEN) {
+  if (resource_size < url_size + HTTPS_URL_SCHEME_LEN) {
     return -1;
   }
 
@@ -85,7 +85,7 @@ int parse_aesgcm_url(char *url, char *resource, size_t resource_size,
     resource_pos = AESGCM_URL_SCHEME_LEN;
     resource_len = url_len - AESGCM_URL_FRAGMENT_LEN - resource_pos - 1;
 
-    strncpy(resource, HTTPS_URL_SCHEME, HTTPS_URL_SCHEME_LEN + 1);
+    strcpy(resource, HTTPS_URL_SCHEME);
     strncat(resource, &(url[resource_pos]), resource_len);
 
     memcpy(nonce, &(url[nonce_pos]), AESGCM_URL_NONCE_SIZE);

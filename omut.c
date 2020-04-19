@@ -40,15 +40,18 @@ int main(int argc, char **argv) {
   }
 
   char *raw_url = strdup(argv[optind]);
-  char *parsed_url = malloc(sizeof(raw_url) + HTTPS_URL_SCHEME_LEN);
+  size_t raw_url_size = strlen(raw_url) + 1;
+
+  size_t parsed_url_size = sizeof(raw_url) + HTTPS_URL_SCHEME_LEN;
+  char *parsed_url = malloc(parsed_url_size);
 
   unsigned char *key = malloc(AES256_GCM_KEY_LENGTH);
   unsigned char nonce[AES256_GCM_NONCE_LENGTH];
 
   aes256gcm_init();
 
-  if (parse_aesgcm_url(raw_url, parsed_url, sizeof(parsed_url), nonce, key) !=
-      0) {
+  if (parse_aesgcm_url(raw_url, raw_url_size, parsed_url, parsed_url_size,
+                       nonce, key) != 0) {
     key = gcry_random_bytes(AES256_GCM_KEY_LENGTH, GCRY_VERY_STRONG_RANDOM);
     gcry_create_nonce(nonce, AES256_GCM_NONCE_LENGTH);
   }
