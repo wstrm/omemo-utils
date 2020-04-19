@@ -15,7 +15,7 @@ enum direction { ENCRYPT, DECRYPT };
 void print_crypto_material(char *type, unsigned char *material, int len) {
   fprintf(stderr, "%s: ", type);
   for (int i = 0; i < len; i++) {
-    fprintf(stderr, "%x", material[i]);
+    fprintf(stderr, "%02x", material[i]);
   }
   fprintf(stderr, "\n");
 }
@@ -45,6 +45,8 @@ int main(int argc, char **argv) {
   unsigned char *key = malloc(AES256_GCM_KEY_LENGTH);
   unsigned char nonce[AES256_GCM_NONCE_LENGTH];
 
+  STREAM *in_stream;
+
   aes256gcm_init();
 
   parsed_url = parse_aesgcm_url(raw_url, nonce, AES256_GCM_NONCE_LENGTH, key,
@@ -52,9 +54,10 @@ int main(int argc, char **argv) {
   if (parsed_url == NULL) {
     key = gcry_random_bytes(AES256_GCM_KEY_LENGTH, GCRY_VERY_STRONG_RANDOM);
     gcry_create_nonce(nonce, AES256_GCM_NONCE_LENGTH);
+    in_stream = stream_open(raw_url);
+  } else {
+    in_stream = stream_open(parsed_url);
   }
-
-  STREAM *in_stream = stream_open(parsed_url);
 
   free(parsed_url);
   free(raw_url);

@@ -94,7 +94,7 @@ char *parse_aesgcm_url(char *url, unsigned char *nonce, size_t nonce_size,
   // Must allocate at least the size of the URL and the HTTPS scheme length.
   resource = (char *)malloc(url_size + HTTPS_URL_SCHEME_LEN);
   if (resource == NULL) {
-    fprintf(stderr, "parse_aesgcm_url() failed to allocate memory");
+    fputs("parse_aesgcm_url() failed to allocate memory\n", stderr);
     abort();
   }
 
