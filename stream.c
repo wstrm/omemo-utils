@@ -60,24 +60,29 @@ char *parse_aesgcm_url(char *url, unsigned char *nonce, unsigned char *key) {
   size_t nonce_pos;
   size_t key_pos;
 
+  char *resource;
   size_t resource_len;
   size_t resource_pos;
 
   // Must allocate at least the size of the URL and the HTTPS scheme length.
-  char *resource = malloc(url_size + HTTPS_URL_SCHEME_LEN);
+  resource = (char *)malloc(url_size + HTTPS_URL_SCHEME_LEN);
+  if (resource == NULL) {
+    fprintf(stderr, "parse_aesgcm_url() failed to allocate memory");
+    abort();
+  }
 
   if (strncmp(url, AESGCM_URL_SCHEME, AESGCM_URL_SCHEME_LEN) == 0) {
     // Nonce is 24 characters, key is 64 characters, giving a total of 88
     // characters. Plus the protocol scheme length and fragment character.
     if (url_len <= AESGCM_URL_SCHEME_LEN + AESGCM_URL_FRAGMENT_LEN + 1) {
-      return NULL;
+      goto out;
     }
 
     nonce_pos = strcspn(url, "#") + 1;
 
     // The fragment length must equal the expected AESGCM fragment length.
     if (url_len - nonce_pos != AESGCM_URL_FRAGMENT_LEN) {
-      return NULL;
+      goto out;
     }
 
     key_pos = nonce_pos + AESGCM_URL_KEY_SIZE;
@@ -93,6 +98,8 @@ char *parse_aesgcm_url(char *url, unsigned char *nonce, unsigned char *key) {
     return resource;
   }
 
+out:
+  free(resource);
   return NULL;
 }
 
