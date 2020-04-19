@@ -47,7 +47,8 @@ int main(int argc, char **argv) {
 
   aes256gcm_init();
 
-  parsed_url = parse_aesgcm_url(raw_url, nonce, key);
+  parsed_url = parse_aesgcm_url(raw_url, nonce, AES256_GCM_NONCE_LENGTH, key,
+                                AES256_GCM_KEY_LENGTH);
   if (parsed_url == NULL) {
     key = gcry_random_bytes(AES256_GCM_KEY_LENGTH, GCRY_VERY_STRONG_RANDOM);
     gcry_create_nonce(nonce, AES256_GCM_NONCE_LENGTH);

@@ -10,7 +10,7 @@
 #define AESGCM_URL_SCHEME "aesgcm://"
 #define AESGCM_URL_SCHEME_LEN (size_t)(sizeof(AESGCM_URL_SCHEME) - 1)
 #define AESGCM_URL_FRAGMENT_LEN                                                \
-  (size_t)(AESGCM_URL_NONCE_SIZE + AESGCM_URL_KEY_SIZE)
+  (size_t)(AESGCM_URL_NONCE_LEN + AESGCM_URL_KEY_LEN)
 
 #define HEADER_CL "Content-Length: "
 #define HEADER_CL_LEN (size_t)(sizeof(HEADER_CL) - 1)
@@ -52,10 +52,37 @@ static size_t header_callback(char *data, size_t size, size_t nitems,
   return size;
 }
 
-char *parse_aesgcm_url(char *url, unsigned char *nonce, unsigned char *key) {
+void bytes_from_hex(char *hex, unsigned char *bytes, size_t bytes_size) {
+  const unsigned char ht[] = {
+      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, // 01234567
+      0x08, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 89:;<=>?
+      0x00, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x00, // @ABCDEFG
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // HIJKLMNO
+  };
+
+  unsigned char b0;
+  unsigned char b1;
+
+  size_t hex_len = strlen(hex);
+
+  memset(bytes, 0, bytes_size);
+
+  for (int i = 0; (i < hex_len) && (i / 2 < bytes_size); i += 2) {
+    b0 = ((unsigned char)hex[i + 0] & 0x1f) ^ 0x10;
+    b1 = ((unsigned char)hex[i + 1] & 0x1f) ^ 0x10;
+
+    bytes[i / 2] = (unsigned char)(ht[b0] << 4) | ht[b1];
+  }
+}
+
+char *parse_aesgcm_url(char *url, unsigned char *nonce, size_t nonce_size,
+                       unsigned char *key, size_t key_size) {
 
   size_t url_len = strlen(url);
   size_t url_size = url_len + 1;
+
+  char nonce_hex[AESGCM_URL_NONCE_LEN];
+  char key_hex[AESGCM_URL_KEY_LEN];
 
   size_t nonce_pos;
   size_t key_pos;
@@ -85,15 +112,18 @@ char *parse_aesgcm_url(char *url, unsigned char *nonce, unsigned char *key) {
       goto out;
     }
 
-    key_pos = nonce_pos + AESGCM_URL_KEY_SIZE;
+    key_pos = nonce_pos + AESGCM_URL_NONCE_LEN;
     resource_pos = AESGCM_URL_SCHEME_LEN;
     resource_len = url_len - AESGCM_URL_FRAGMENT_LEN - resource_pos - 1;
 
     strcpy(resource, HTTPS_URL_SCHEME);
     strncat(resource, &(url[resource_pos]), resource_len);
 
-    memcpy(nonce, &(url[nonce_pos]), AESGCM_URL_NONCE_SIZE);
-    memcpy(key, &(url[key_pos]), AESGCM_URL_KEY_SIZE);
+    strncpy(nonce_hex, &(url[nonce_pos]), AESGCM_URL_NONCE_LEN);
+    strncpy(key_hex, &(url[key_pos]), AESGCM_URL_KEY_LEN);
+
+    bytes_from_hex(nonce_hex, nonce, nonce_size);
+    bytes_from_hex(key_hex, key, key_size);
 
     return resource;
   }
