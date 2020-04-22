@@ -98,16 +98,6 @@ out:
   return res;
 }
 
-int aes256gcm_init(void) {
-  gcry_control(GCRYCTL_SUSPEND_SECMEM_WARN);
-  gcry_control(GCRYCTL_INIT_SECMEM, 16384, 0);
-  gcry_control(GCRYCTL_RESUME_SECMEM_WARN);
-
-  gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
-
-  return 0;
-}
-
 int aes256gcm_encrypt(STREAM *in, FILE *out, unsigned char key[],
                       unsigned char nonce[]) {
   return aes256gcm_crypt(in, out, key, nonce, true);

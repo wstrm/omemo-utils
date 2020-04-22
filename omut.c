@@ -2,6 +2,7 @@
 // Copyright (c) 2020 William Wennerström
 
 #include "crypt.h"
+#include <errno.h>
 #include <gcrypt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +12,18 @@ enum direction { ENCRYPT, DECRYPT };
 
 #define EXIT_INVALID_CHECKSUM 2
 #define EXIT_BAD_FILE 3
+#define EXIT_FAIL_READ 4
+#define EXIT_NO_MEM 5
+
+int gcry_init(void) {
+  gcry_control(GCRYCTL_SUSPEND_SECMEM_WARN);
+  gcry_control(GCRYCTL_INIT_SECMEM, 16384, 0);
+  gcry_control(GCRYCTL_RESUME_SECMEM_WARN);
+
+  gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
+
+  return 0;
+}
 
 void print_crypto_material(char *type, unsigned char *material, int len) {
   fprintf(stderr, "%s: ", type);
@@ -39,20 +52,33 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
-  char *raw_url = strdup(argv[optind]);
-  char *parsed_url;
+  gcry_init();
 
-  unsigned char *key = malloc(AES256_GCM_KEY_LENGTH);
   unsigned char nonce[AES256_GCM_NONCE_LENGTH];
+  unsigned char *key = gcry_malloc_secure(AES256_GCM_KEY_LENGTH);
+  if (key == NULL) {
+    fputs("Out of memory\n", stderr);
+    exit(EXIT_NO_MEM);
+  }
 
   STREAM *in_stream;
+  char *raw_url = strdup(argv[optind]);
 
-  aes256gcm_init();
+  int crypt_res = GPG_ERR_NO_ERROR;
+  int exit_status = EXIT_SUCCESS;
 
+  char *parsed_url;
   parsed_url = parse_aesgcm_url(raw_url, nonce, AES256_GCM_NONCE_LENGTH, key,
                                 AES256_GCM_KEY_LENGTH);
+  if (parsed_url == NULL && errno == ENOMEM) {
+    exit_status = EXIT_NO_MEM;
+    fputs("Out of memory\n", stderr);
+    goto out;
+  }
+
   if (parsed_url == NULL) {
-    key = gcry_random_bytes(AES256_GCM_KEY_LENGTH, GCRY_VERY_STRONG_RANDOM);
+    key = gcry_random_bytes_secure(AES256_GCM_KEY_LENGTH,
+                                   GCRY_VERY_STRONG_RANDOM);
     gcry_create_nonce(nonce, AES256_GCM_NONCE_LENGTH);
     in_stream = stream_open(raw_url);
   } else {
@@ -62,8 +88,11 @@ int main(int argc, char **argv) {
   free(parsed_url);
   free(raw_url);
 
-  int crypt_res = GPG_ERR_NO_ERROR;
-  int exit_status = EXIT_SUCCESS;
+  if (in_stream == NULL) {
+    exit_status = EXIT_FAIL_READ;
+    fputs("Failed to read input\n", stderr);
+    goto out;
+  }
 
   if (direction == ENCRYPT) {
     crypt_res = aes256gcm_encrypt(in_stream, stdout, key, nonce);
@@ -82,7 +111,7 @@ int main(int argc, char **argv) {
   print_crypto_material("Key", key, AES256_GCM_KEY_LENGTH);
   print_crypto_material("Nonce", nonce, AES256_GCM_NONCE_LENGTH);
 
-  free(key);
-
+out:
+  gcry_free(key);
   exit(exit_status);
 }
