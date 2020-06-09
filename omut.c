@@ -2,6 +2,7 @@
 // Copyright (c) 2020 William Wennerström
 
 #include "crypt.h"
+#include <ctype.h>
 #include <errno.h>
 #include <gcrypt.h>
 #include <stdio.h>
@@ -13,7 +14,8 @@ enum direction { ENCRYPT, DECRYPT };
 #define EXIT_INVALID_CHECKSUM 2
 #define EXIT_BAD_FILE 3
 #define EXIT_FAIL_READ 4
-#define EXIT_NO_MEM 5
+#define EXIT_FAIL_WRITE 5
+#define EXIT_NO_MEM 6
 
 int gcry_init(void) {
   gcry_control(GCRYCTL_SUSPEND_SECMEM_WARN);
@@ -36,19 +38,34 @@ void print_crypto_material(char *type, unsigned char *material, int len) {
 int main(int argc, char **argv) {
   int opt;
   int direction = ENCRYPT;
+  char *output_path = NULL;
 
-  while ((opt = getopt(argc, argv, "d+")) != -1) {
+  while ((opt = getopt(argc, argv, ":do:")) != -1) {
     switch (opt) {
     case 'd':
       direction = DECRYPT;
+      continue;
+    case 'o':
+      output_path = optarg;
+      continue;
+    case ':':
+      fprintf(stderr, "Option '-%c' requires an argument\n", optopt);
+      break;
+    case '?':
+      if (isprint(optopt)) {
+        fprintf(stderr, "Unknown option '-%c'\n", optopt);
+      } else {
+        fprintf(stderr, "Unknown option character '\\x%x'\n", optopt);
+      }
       break;
     default:
-      direction = ENCRYPT;
+      abort();
     }
+    exit(EXIT_FAILURE);
   }
 
   if (optind + 1 != argc) {
-    fprintf(stderr, "Usage: %s [-d] URL\n", argv[0]);
+    fprintf(stderr, "Usage: %s [-d] [-o FILE] URL\n", argv[0]);
     exit(EXIT_FAILURE);
   }
 
@@ -94,10 +111,20 @@ int main(int argc, char **argv) {
     goto out;
   }
 
+  FILE *out_file = stdout;
+  if (output_path != NULL) {
+    out_file = fopen(output_path, "w");
+    if (out_file == NULL) {
+      exit_status = EXIT_FAIL_WRITE;
+      fprintf(stderr, "Failed to open '%s' for writing\n", output_path);
+      goto out;
+    }
+  }
+
   if (direction == ENCRYPT) {
-    crypt_res = aes256gcm_encrypt(in_stream, stdout, key, nonce);
+    crypt_res = aes256gcm_encrypt(in_stream, out_file, key, nonce);
   } else /* direction == DECRYPT */ {
-    crypt_res = aes256gcm_decrypt(in_stream, stdout, key, nonce);
+    crypt_res = aes256gcm_decrypt(in_stream, out_file, key, nonce);
   }
 
   if (crypt_res == GPG_ERR_CHECKSUM) {
