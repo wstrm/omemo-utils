@@ -15,6 +15,8 @@ all: test omut
 install: omut
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp omut $(DESTDIR)$(PREFIX)/bin
+	mkdir -p $(DESTDIR)$(PREFIX)/share/man/man1
+	cp omut.1 $(DESTDIR)$(PREFIX)/share/man/man1/omut.1
 
 uninstall: omut
 	rm $(DESTDIR)$(PREFIX)/bin/omut
