@@ -20,6 +20,6 @@ struct stream_data {
 typedef struct stream_data STREAM;
 
 size_t stream_read(void *buffer, size_t bytes, STREAM *stream);
-STREAM *stream_open(const char *url);
+STREAM *stream_open(const char *url, bool insecure);
 char *parse_aesgcm_url(char *url, unsigned char *nonce, size_t nonce_size,
                        unsigned char *key, size_t key_size);
