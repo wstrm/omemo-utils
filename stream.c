@@ -134,7 +134,7 @@ out:
   return NULL;
 }
 
-STREAM *stream_open(const char *url) {
+STREAM *stream_open(const char *url, bool insecure) {
   CURLcode res;
 
   STREAM *stream;
@@ -156,6 +156,11 @@ STREAM *stream_open(const char *url) {
 
   curl_easy_setopt(hd, CURLOPT_WRITEFUNCTION, write_callback);
   curl_easy_setopt(hd, CURLOPT_WRITEDATA, (void *)stream);
+
+  if (insecure) {
+    curl_easy_setopt(hd, CURLOPT_SSL_VERIFYHOST, 0L);
+    curl_easy_setopt(hd, CURLOPT_SSL_VERIFYPEER, 0L);
+  }
 
   res = curl_easy_perform(hd);
   if (res != CURLE_OK) {

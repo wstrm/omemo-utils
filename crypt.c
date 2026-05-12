@@ -19,7 +19,7 @@ int aes256gcm_crypt(STREAM *in, FILE *out, unsigned char key[],
     abort();
   }
 
-  off_t file_size = in->expected_size;
+  off_t file_size = in->expected_size ? in->expected_size : in->actual_size;
   if (!encrypt) {
     file_size -= AES256_GCM_TAG_LENGTH;
   }

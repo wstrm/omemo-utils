@@ -38,12 +38,16 @@ void print_crypto_material(char *type, unsigned char *material, int len) {
 int main(int argc, char **argv) {
   int opt;
   int direction = ENCRYPT;
+  bool insecure = false;
   char *output_path = NULL;
 
-  while ((opt = getopt(argc, argv, ":do:")) != -1) {
+  while ((opt = getopt(argc, argv, ":dko:")) != -1) {
     switch (opt) {
     case 'd':
       direction = DECRYPT;
+      continue;
+    case 'k':
+      insecure = true;
       continue;
     case 'o':
       output_path = optarg;
@@ -97,9 +101,9 @@ int main(int argc, char **argv) {
     key = gcry_random_bytes_secure(AES256_GCM_KEY_LENGTH,
                                    GCRY_VERY_STRONG_RANDOM);
     gcry_create_nonce(nonce, AES256_GCM_NONCE_LENGTH);
-    in_stream = stream_open(raw_url);
+    in_stream = stream_open(raw_url, insecure);
   } else {
-    in_stream = stream_open(parsed_url);
+    in_stream = stream_open(parsed_url, insecure);
   }
 
   free(parsed_url);
